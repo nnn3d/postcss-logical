@@ -3,10 +3,12 @@ import cloneRuleSpecificity from './clone-rule-specificity';
 
 export default (decl, values, dir, preserve) => {
 	if ('logical' !== values[0]) {
-		decl.cloneBefore({ prop: 'top', value: values[0] });
-		decl.cloneBefore({ prop: 'right', value: values[1] || values[0] });
-		decl.cloneBefore({ prop: 'bottom', value: values[2] || values[0] });
-		decl.cloneBefore({ prop: 'left', value: values[3] || values[1] || values[0] });
+		cloneRuleSpecificity(decl).append(
+			decl.cloneBefore({ prop: 'top', value: values[0] }),
+			decl.cloneBefore({ prop: 'right', value: values[1] || values[0] }),
+			decl.cloneBefore({ prop: 'bottom', value: values[2] || values[0] }),
+			decl.cloneBefore({ prop: 'left', value: values[3] || values[1] || values[0] }),
+		);
 		clean(decl, preserve);
 		return;
 	}

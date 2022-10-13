@@ -4,7 +4,11 @@ import reduceValues from './reduce-values';
 
 export default (decl, values, dir, preserve) => {
 	if ('logical' !== values[0]) {
-		return null;
+		cloneRuleSpecificity(decl).append(decl.cloneBefore({
+			value: values.join(' ')
+		}));
+		clean(decl, preserve);
+		return;
 	}
 
 	// get logical directions as all, inline, block-end, then inline-end
