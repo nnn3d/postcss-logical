@@ -1,4 +1,5 @@
 import cloneRule from './clone-rule';
+import cloneRuleSpecificity from './clone-rule-specificity';
 
 export default (decl, values, dir, preserve) => {
 	if ('logical' !== values[0]) {
@@ -12,7 +13,11 @@ export default (decl, values, dir, preserve) => {
 
 	const isLTR = !values[4] || values[4] === values[2];
 
-	if (isLTR || dir === 'ltr') {
+	if (isLTR) {
+		cloneRuleSpecificity(decl).append(lDecl(decl, values));
+		clean(decl, preserve);
+		return;
+	} else if (dir === 'ltr') {
 		lDecl(decl, values);
 		clean(decl, preserve);
 		return;

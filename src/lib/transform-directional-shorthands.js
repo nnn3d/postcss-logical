@@ -1,4 +1,5 @@
 import cloneRule from './clone-rule';
+import cloneRuleSpecificity from './clone-rule-specificity';
 import reduceValues from './reduce-values';
 
 export default (decl, values, dir, preserve) => {
@@ -30,7 +31,13 @@ export default (decl, values, dir, preserve) => {
 	// return the ltr values if the values are flow agnostic (where no second inline value was needed)
 	const isFlowAgnostic = ltrValues.length < 4;
 
-	if (isFlowAgnostic || dir === 'ltr') {
+	if (isFlowAgnostic) {
+		cloneRuleSpecificity(decl).append(ltrDecl());
+		clean(decl, preserve);
+		return;
+	}
+
+	if (dir === 'ltr') {
 		ltrDecl();
 		clean(decl, preserve);
 		return;

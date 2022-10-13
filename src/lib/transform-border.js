@@ -1,4 +1,5 @@
 import cloneRule from './clone-rule';
+import cloneRuleSpecificity from './clone-rule-specificity';
 
 const matchLogicalBorderSide = /^border-(block|block-start|block-end|inline|inline-start|inline-end)(-(width|style|color))?$/i;
 
@@ -61,7 +62,11 @@ export default {
 		};
 
 		const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
-		if (isLTR || dir === 'ltr') {
+		if (isLTR) {
+			cloneRuleSpecificity(decl).append(ltrDecls());
+			clean(decl, preserve);
+			return;
+		} else if (dir === 'ltr') {
 			ltrDecls();
 			clean(decl, preserve);
 			return;
