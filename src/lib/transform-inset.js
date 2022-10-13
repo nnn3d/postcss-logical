@@ -10,9 +10,7 @@ export default (decl, values, dir, preserve) => {
 		return;
 	}
 
-	const isLTR = !values[4] || values[4] === values[2];
-
-	if (isLTR || dir === 'ltr') {
+	if (dir === 'ltr') {
 		lDecl(decl, values);
 		clean(decl, preserve);
 		return;

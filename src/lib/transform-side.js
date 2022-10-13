@@ -40,8 +40,7 @@ export default {
 			];
 		};
 
-		const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
-		if (isLTR || dir === 'ltr') {
+		if (dir === 'ltr') {
 			ltrDecls();
 			clean(decl, preserve);
 			return;
