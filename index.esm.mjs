@@ -215,7 +215,11 @@ var reduceValues = (values => {
 
 var transformDirectionalShorthands = ((decl, values, dir, preserve) => {
   if ('logical' !== values[0]) {
-    return null;
+    cloneRuleSpecificity(decl).append(decl.cloneBefore({
+      value: values.join(' ')
+    }));
+    clean$6(decl, preserve);
+    return;
   }
 
   // get logical directions as all, inline, block-end, then inline-end
@@ -320,22 +324,19 @@ function clean$5(decl, preserve) {
 
 var transformInset = ((decl, values, dir, preserve) => {
   if ('logical' !== values[0]) {
-    decl.cloneBefore({
+    cloneRuleSpecificity(decl).append(decl.cloneBefore({
       prop: 'top',
       value: values[0]
-    });
-    decl.cloneBefore({
+    }), decl.cloneBefore({
       prop: 'right',
       value: values[1] || values[0]
-    });
-    decl.cloneBefore({
+    }), decl.cloneBefore({
       prop: 'bottom',
       value: values[2] || values[0]
-    });
-    decl.cloneBefore({
+    }), decl.cloneBefore({
       prop: 'left',
       value: values[3] || values[1] || values[0]
-    });
+    }));
     clean$4(decl, preserve);
     return;
   }
