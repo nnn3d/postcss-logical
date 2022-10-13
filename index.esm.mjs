@@ -215,10 +215,7 @@ var transformDirectionalShorthands = ((decl, values, dir, preserve) => {
       value: ltrValues.join(' ')
     });
   };
-
-  // return the ltr values if the values are flow agnostic (where no second inline value was needed)
-  const isFlowAgnostic = ltrValues.length < 4;
-  if (isFlowAgnostic || dir === 'ltr') {
+  if (dir === 'ltr') {
     ltrDecl();
     clean$6(decl, preserve);
     return;

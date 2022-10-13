@@ -27,10 +27,7 @@ export default (decl, values, dir, preserve) => {
 		});
 	};
 
-	// return the ltr values if the values are flow agnostic (where no second inline value was needed)
-	const isFlowAgnostic = ltrValues.length < 4;
-
-	if (isFlowAgnostic || dir === 'ltr') {
+	if (dir === 'ltr') {
 		ltrDecl();
 		clean(decl, preserve);
 		return;
