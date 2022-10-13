@@ -215,21 +215,17 @@ var reduceValues = (values => {
 
 var transformDirectionalShorthands = ((prefix, postfix) => (decl, values, dir, preserve) => {
   if ('logical' !== values[0]) {
+    const blockStart = values[0];
+    const blockEnd = values[3] || values[1] || values[0];
+    const inlineStart = values[3] || values[1] || values[0];
+    const inlineEnd = values[1] || values[0];
     decl.cloneBefore({
-      prop: `${prefix}-block-start${postfix ? `-${postfix}` : ''}`,
-      value: values[0]
+      prop: `${prefix}-block${postfix ? `-${postfix}` : ''}`,
+      value: [blockStart, blockEnd].filter(Boolean).join(' ')
     });
     decl.cloneBefore({
-      prop: `${prefix}-inline-start${postfix ? `-${postfix}` : ''}`,
-      value: values[3] || values[1] || values[0]
-    });
-    decl.cloneBefore({
-      prop: `${prefix}-block-end${postfix ? `-${postfix}` : ''}`,
-      value: values[2] || values[0]
-    });
-    decl.cloneBefore({
-      prop: `${prefix}-inline-end${postfix ? `-${postfix}` : ''}`,
-      value: values[1] || values[0]
+      prop: `${prefix}-inline${postfix ? `-${postfix}` : ''}`,
+      value: [inlineStart, inlineEnd].filter(Boolean).join(' ')
     });
     clean$6(decl, preserve);
     return;
