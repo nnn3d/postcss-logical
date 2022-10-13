@@ -12,6 +12,18 @@ var cloneRule = ((decl, dir) => {
   return rule;
 });
 
+var cloneRuleSpecificity = (decl => {
+  const rule = Object(decl.parent).type === 'rule' ? decl.parent.cloneBefore({
+    raws: {}
+  }).removeAll() : postcss.rule({
+    selector: '&'
+  });
+  rule.assign({
+    'selectors': rule.selectors.map(selector => `[dir] ${selector}`)
+  });
+  return rule;
+});
+
 const matchLogicalBorderSide = /^border-(block|block-start|block-end|inline|inline-start|inline-end)(-(width|style|color))?$/i;
 var transformBorder = {
   // border-block
@@ -60,7 +72,12 @@ var transformBorder = {
         value: values[1] || values[0]
       })];
     };
-    if (dir === 'ltr') {
+    const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
+    if (isLTR) {
+      cloneRuleSpecificity(decl).append(ltrDecls());
+      clean$8(decl, preserve);
+      return;
+    } else if (dir === 'ltr') {
       ltrDecls();
       clean$8(decl, preserve);
       return;
@@ -215,6 +232,14 @@ var transformDirectionalShorthands = ((decl, values, dir, preserve) => {
       value: ltrValues.join(' ')
     });
   };
+
+  // return the ltr values if the values are flow agnostic (where no second inline value was needed)
+  const isFlowAgnostic = ltrValues.length < 4;
+  if (isFlowAgnostic) {
+    cloneRuleSpecificity(decl).append(ltrDecl());
+    clean$6(decl, preserve);
+    return;
+  }
   if (dir === 'ltr') {
     ltrDecl();
     clean$6(decl, preserve);
@@ -314,7 +339,12 @@ var transformInset = ((decl, values, dir, preserve) => {
     clean$4(decl, preserve);
     return;
   }
-  if (dir === 'ltr') {
+  const isLTR = !values[4] || values[4] === values[2];
+  if (isLTR) {
+    cloneRuleSpecificity(decl).append(lDecl$1(decl, values));
+    clean$4(decl, preserve);
+    return;
+  } else if (dir === 'ltr') {
     lDecl$1(decl, values);
     clean$4(decl, preserve);
     return;
@@ -420,7 +450,12 @@ var transformSide = {
     const rtlDecls = () => {
       return [cloneDeclBefore(decl, '-right', values[0]), cloneDeclBefore(decl, '-left', values[1] || values[0])];
     };
-    if (dir === 'ltr') {
+    const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
+    if (isLTR) {
+      cloneRuleSpecificity(decl).append(ltrDecls());
+      clean$2(decl, preserve);
+      return;
+    } else if (dir === 'ltr') {
       ltrDecls();
       clean$2(decl, preserve);
       return;
