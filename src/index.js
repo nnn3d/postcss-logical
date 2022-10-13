@@ -61,7 +61,7 @@ function postcssLogicalProperties(opts) {
 			'min-inline-size': makeTransform(transformSize),
 
 			// Flow-relative Margins
-			'margin': makeTransform(transformDirectionalShorthands),
+			'margin': makeTransform(transformDirectionalShorthands('margin')),
 			'margin-inline': makeTransform(transformSide['inline']),
 			'margin-inline-end': makeTransform(transformSide['inline-end']),
 			'margin-inline-start': makeTransform(transformSide['inline-start']),
@@ -79,7 +79,7 @@ function postcssLogicalProperties(opts) {
 			'inset-block-start': makeTransform(transformSide['block-start']),
 
 			// Flow-relative Padding
-			'padding': makeTransform(transformDirectionalShorthands),
+			'padding': makeTransform(transformDirectionalShorthands('padding')),
 			'padding-inline': makeTransform(transformSide['inline']),
 			'padding-inline-end': makeTransform(transformSide['inline-end']),
 			'padding-inline-start': makeTransform(transformSide['inline-start']),
@@ -120,9 +120,9 @@ function postcssLogicalProperties(opts) {
 			'border-start-start-radius': makeTransform(transformBorderRadius),
 
 			// Four-Directional Shorthand Border Properties
-			'border-color': makeTransform(transformDirectionalShorthands),
-			'border-style': makeTransform(transformDirectionalShorthands),
-			'border-width': makeTransform(transformDirectionalShorthands),
+			'border-color': makeTransform(transformDirectionalShorthands('border', 'color')),
+			'border-style': makeTransform(transformDirectionalShorthands('border', 'style')),
+			'border-width': makeTransform(transformDirectionalShorthands('border', 'width')),
 
 			// Transition helpers
 			'transition': makeTransform(transformTransition),

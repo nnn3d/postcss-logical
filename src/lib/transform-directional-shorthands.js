@@ -2,11 +2,12 @@ import cloneRule from './clone-rule';
 import cloneRuleSpecificity from './clone-rule-specificity';
 import reduceValues from './reduce-values';
 
-export default (decl, values, dir, preserve) => {
+export default (prefix, postfix) => (decl, values, dir, preserve) => {
 	if ('logical' !== values[0]) {
-		cloneRuleSpecificity(decl).append(decl.cloneBefore({
-			value: values.join(' ')
-		}));
+		decl.cloneBefore({ prop: `${prefix}-block-start${postfix ? `-${postfix}` : ''}`, value: values[0] });
+		decl.cloneBefore({ prop: `${prefix}-inline-start${postfix ? `-${postfix}` : ''}`, value: values[3] || values[1] || values[0] });
+		decl.cloneBefore({ prop: `${prefix}-block-end${postfix ? `-${postfix}` : ''}`, value: values[2] || values[0] });
+		decl.cloneBefore({ prop: `${prefix}-inline-end${postfix ? `-${postfix}` : ''}`, value: values[1] || values[0] });
 		clean(decl, preserve);
 		return;
 	}

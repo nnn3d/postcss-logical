@@ -3,12 +3,10 @@ import cloneRuleSpecificity from './clone-rule-specificity';
 
 export default (decl, values, dir, preserve) => {
 	if ('logical' !== values[0]) {
-		cloneRuleSpecificity(decl).append(
-			decl.cloneBefore({ prop: 'top', value: values[0] }),
-			decl.cloneBefore({ prop: 'right', value: values[1] || values[0] }),
-			decl.cloneBefore({ prop: 'bottom', value: values[2] || values[0] }),
-			decl.cloneBefore({ prop: 'left', value: values[3] || values[1] || values[0] }),
-		);
+		decl.cloneBefore({ prop: 'inset-block-start', value: values[0] });
+		decl.cloneBefore({ prop: 'inset-inline-start', value: values[3] || values[1] || values[0] });
+		decl.cloneBefore({ prop: 'inset-block-end', value: values[2] || values[0] });
+		decl.cloneBefore({ prop: 'inset-inline-end', value: values[1] || values[0] });
 		clean(decl, preserve);
 		return;
 	}
