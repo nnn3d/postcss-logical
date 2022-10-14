@@ -213,21 +213,134 @@ var reduceValues = (values => {
   return reducedValues;
 });
 
+var matchSide = /^(inset|margin|padding)(?:-(block|block-start|block-end|inline|inline-start|inline-end|start|end))$/i;
+
+var matchInsetPrefix = /^inset-/i;
+
+var cloneDeclBefore = ((decl, suffix, value) => decl.cloneBefore({
+  prop: `${decl.prop.replace(matchSide, '$1')}${suffix}`.replace(matchInsetPrefix, ''),
+  value
+}));
+
+var transformSide = {
+  // inset-block, margin-block, padding-block
+  'block': (decl, values, dir, preserve) => {
+    cloneDeclBefore(decl, '-top', values[0]);
+    cloneDeclBefore(decl, '-bottom', values[1] || values[0]);
+    clean$6(decl, preserve);
+  },
+  // inset-block-start, margin-block-start, padding-block-start
+  'block-start': (decl, values, dir, preserve) => {
+    decl.cloneBefore({
+      prop: decl.prop.replace(matchSide, '$1-top').replace(matchInsetPrefix, '')
+    });
+    clean$6(decl, preserve);
+  },
+  // inset-block-end, margin-block-end, padding-block-end
+  'block-end': (decl, values, dir, preserve) => {
+    decl.cloneBefore({
+      prop: decl.prop.replace(matchSide, '$1-bottom').replace(matchInsetPrefix, '')
+    });
+    clean$6(decl, preserve);
+  },
+  // inset-inline, margin-inline, padding-inline
+  'inline': (decl, values, dir, preserve) => {
+    const ltrDecls = () => {
+      return [cloneDeclBefore(decl, '-left', values[0]), cloneDeclBefore(decl, '-right', values[1] || values[0])];
+    };
+    const rtlDecls = () => {
+      return [cloneDeclBefore(decl, '-right', values[0]), cloneDeclBefore(decl, '-left', values[1] || values[0])];
+    };
+    const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
+    if (isLTR) {
+      cloneRuleSpecificity(decl).append(ltrDecls());
+      clean$6(decl, preserve);
+      return;
+    } else if (dir === 'ltr') {
+      ltrDecls();
+      clean$6(decl, preserve);
+      return;
+    } else if (dir === 'rtl') {
+      rtlDecls();
+      clean$6(decl, preserve);
+      return;
+    } else {
+      cloneRule(decl, 'ltr').append(ltrDecls());
+      cloneRule(decl, 'rtl').append(rtlDecls());
+      clean$6(decl, preserve);
+      return;
+    }
+  },
+  // inset-inline-start, margin-inline-start, padding-inline-start
+  'inline-start': (decl, values, dir, preserve) => {
+    const ltrDecl = () => {
+      return cloneDeclBefore(decl, '-left', decl.value);
+    };
+    const rtlDecl = () => {
+      return cloneDeclBefore(decl, '-right', decl.value);
+    };
+    if (dir === 'ltr') {
+      ltrDecl();
+      clean$6(decl, preserve);
+      return;
+    } else if (dir === 'rtl') {
+      rtlDecl();
+      clean$6(decl, preserve);
+      return;
+    } else {
+      cloneRule(decl, 'ltr').append(ltrDecl());
+      cloneRule(decl, 'rtl').append(rtlDecl());
+      clean$6(decl, preserve);
+      return;
+    }
+  },
+  // inset-inline-end, margin-inline-end, padding-inline-end
+  'inline-end': (decl, values, dir, preserve) => {
+    const ltrDecl = () => {
+      return cloneDeclBefore(decl, '-right', decl.value);
+    };
+    const rtlDecl = () => {
+      return cloneDeclBefore(decl, '-left', decl.value);
+    };
+    if (dir === 'ltr') {
+      ltrDecl();
+      clean$6(decl, preserve);
+      return;
+    } else if (dir === 'rtl') {
+      rtlDecl();
+      clean$6(decl, preserve);
+      return;
+    } else {
+      cloneRule(decl, 'ltr').append(ltrDecl());
+      cloneRule(decl, 'rtl').append(rtlDecl());
+      clean$6(decl, preserve);
+      return;
+    }
+  }
+};
+function clean$6(decl, preserve) {
+  if (!preserve) decl.remove();
+}
+
 var transformDirectionalShorthands = ((prefix, postfix) => (decl, values, dir, preserve) => {
   if ('logical' !== values[0]) {
     const blockStart = values[0];
     const blockEnd = values[3] || values[1] || values[0];
     const inlineStart = values[3] || values[1] || values[0];
     const inlineEnd = values[1] || values[0];
-    decl.cloneBefore({
+    const blockValues = [blockStart, blockEnd].filter(Boolean).join(' ');
+    const blockDecl = decl.cloneBefore({
       prop: `${prefix}-block${postfix ? `-${postfix}` : ''}`,
-      value: [blockStart, blockEnd].filter(Boolean).join(' ')
+      value: blockValues
     });
-    decl.cloneBefore({
+    transformSide.block(blockDecl, blockValues, dir, false);
+    const inlineValues = [inlineStart, inlineEnd].filter(Boolean).join(' ');
+    const inlineDecl = decl.cloneBefore({
       prop: `${prefix}-inline${postfix ? `-${postfix}` : ''}`,
-      value: [inlineStart, inlineEnd].filter(Boolean).join(' ')
+      value: inlineValues
     });
-    clean$6(decl, preserve);
+    transformSide.inline(inlineDecl, inlineValues, dir, false);
+    clean$5(decl, preserve);
     return;
   }
 
@@ -250,12 +363,12 @@ var transformDirectionalShorthands = ((prefix, postfix) => (decl, values, dir, p
   const isFlowAgnostic = ltrValues.length < 4;
   if (isFlowAgnostic) {
     cloneRuleSpecificity(decl).append(ltrDecl());
-    clean$6(decl, preserve);
+    clean$5(decl, preserve);
     return;
   }
   if (dir === 'ltr') {
     ltrDecl();
-    clean$6(decl, preserve);
+    clean$5(decl, preserve);
     return;
   }
 
@@ -272,14 +385,14 @@ var transformDirectionalShorthands = ((prefix, postfix) => (decl, values, dir, p
   };
   if (dir === 'rtl') {
     rtlDecl();
-    clean$6(decl, preserve);
+    clean$5(decl, preserve);
     return;
   }
   cloneRule(decl, 'ltr').append(ltrDecl());
   cloneRule(decl, 'rtl').append(rtlDecl());
-  clean$6(decl, preserve);
+  clean$5(decl, preserve);
 });
-function clean$6(decl, preserve) {
+function clean$5(decl, preserve) {
   if (!preserve) decl.remove();
 }
 
@@ -287,32 +400,32 @@ var transformFloat = ((decl, values, dir, preserve) => {
   if (/^inline-start$/i.test(decl.value)) {
     if (dir === 'ltr') {
       lDecl$2(decl);
-      clean$5(decl, preserve);
+      clean$4(decl, preserve);
       return;
     } else if (dir === 'rtl') {
       rDecl$2(decl);
-      clean$5(decl, preserve);
+      clean$4(decl, preserve);
       return;
     } else {
       cloneRule(decl, 'ltr').append(lDecl$2(decl));
       cloneRule(decl, 'rtl').append(rDecl$2(decl));
-      clean$5(decl, preserve);
+      clean$4(decl, preserve);
       return;
     }
   }
   if (/^inline-end$/i.test(decl.value)) {
     if (dir === 'ltr') {
       rDecl$2(decl);
-      clean$5(decl, preserve);
+      clean$4(decl, preserve);
       return;
     } else if (dir === 'rtl') {
       lDecl$2(decl);
-      clean$5(decl, preserve);
+      clean$4(decl, preserve);
       return;
     } else {
       cloneRule(decl, 'ltr').append(rDecl$2(decl));
       cloneRule(decl, 'rtl').append(lDecl$2(decl));
-      clean$5(decl, preserve);
+      clean$4(decl, preserve);
       return;
     }
   }
@@ -327,7 +440,7 @@ function rDecl$2(decl) {
     value: 'right'
   });
 }
-function clean$5(decl, preserve) {
+function clean$4(decl, preserve) {
   if (!preserve) decl.remove();
 }
 
@@ -349,26 +462,26 @@ var transformInset = ((decl, values, dir, preserve) => {
       prop: 'inset-inline-end',
       value: values[1] || values[0]
     });
-    clean$4(decl, preserve);
+    clean$3(decl, preserve);
     return;
   }
   const isLTR = !values[4] || values[4] === values[2];
   if (isLTR) {
     cloneRuleSpecificity(decl).append(lDecl$1(decl, values));
-    clean$4(decl, preserve);
+    clean$3(decl, preserve);
     return;
   } else if (dir === 'ltr') {
     lDecl$1(decl, values);
-    clean$4(decl, preserve);
+    clean$3(decl, preserve);
     return;
   } else if (dir === 'rtl') {
     rDecl$1(decl, values);
-    clean$4(decl, preserve);
+    clean$3(decl, preserve);
     return;
   } else {
     cloneRule(decl, 'ltr').append(lDecl$1(decl, values));
     cloneRule(decl, 'rtl').append(rDecl$1(decl, values));
-    clean$4(decl, preserve);
+    clean$3(decl, preserve);
     return;
   }
 });
@@ -402,7 +515,7 @@ function rDecl$1(decl, values) {
     value: values[4] || values[2] || values[1]
   })];
 }
-function clean$4(decl, preserve) {
+function clean$3(decl, preserve) {
   if (!preserve) decl.remove();
 }
 
@@ -411,125 +524,16 @@ var transformResize = ((decl, values, dir, preserve) => {
     decl.cloneBefore({
       value: 'vertical'
     });
-    clean$3(decl, preserve);
+    clean$2(decl, preserve);
     return;
   } else if (/^inline$/i.test(decl.value)) {
     decl.cloneBefore({
       value: 'horizontal'
     });
-    clean$3(decl, preserve);
+    clean$2(decl, preserve);
     return;
   }
 });
-function clean$3(decl, preserve) {
-  if (!preserve) decl.remove();
-}
-
-var matchSide = /^(inset|margin|padding)(?:-(block|block-start|block-end|inline|inline-start|inline-end|start|end))$/i;
-
-var matchInsetPrefix = /^inset-/i;
-
-var cloneDeclBefore = ((decl, suffix, value) => decl.cloneBefore({
-  prop: `${decl.prop.replace(matchSide, '$1')}${suffix}`.replace(matchInsetPrefix, ''),
-  value
-}));
-
-var transformSide = {
-  // inset-block, margin-block, padding-block
-  'block': (decl, values, dir, preserve) => {
-    cloneDeclBefore(decl, '-top', values[0]);
-    cloneDeclBefore(decl, '-bottom', values[1] || values[0]);
-    clean$2(decl, preserve);
-  },
-  // inset-block-start, margin-block-start, padding-block-start
-  'block-start': (decl, values, dir, preserve) => {
-    decl.cloneBefore({
-      prop: decl.prop.replace(matchSide, '$1-top').replace(matchInsetPrefix, '')
-    });
-    clean$2(decl, preserve);
-  },
-  // inset-block-end, margin-block-end, padding-block-end
-  'block-end': (decl, values, dir, preserve) => {
-    decl.cloneBefore({
-      prop: decl.prop.replace(matchSide, '$1-bottom').replace(matchInsetPrefix, '')
-    });
-    clean$2(decl, preserve);
-  },
-  // inset-inline, margin-inline, padding-inline
-  'inline': (decl, values, dir, preserve) => {
-    const ltrDecls = () => {
-      return [cloneDeclBefore(decl, '-left', values[0]), cloneDeclBefore(decl, '-right', values[1] || values[0])];
-    };
-    const rtlDecls = () => {
-      return [cloneDeclBefore(decl, '-right', values[0]), cloneDeclBefore(decl, '-left', values[1] || values[0])];
-    };
-    const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
-    if (isLTR) {
-      cloneRuleSpecificity(decl).append(ltrDecls());
-      clean$2(decl, preserve);
-      return;
-    } else if (dir === 'ltr') {
-      ltrDecls();
-      clean$2(decl, preserve);
-      return;
-    } else if (dir === 'rtl') {
-      rtlDecls();
-      clean$2(decl, preserve);
-      return;
-    } else {
-      cloneRule(decl, 'ltr').append(ltrDecls());
-      cloneRule(decl, 'rtl').append(rtlDecls());
-      clean$2(decl, preserve);
-      return;
-    }
-  },
-  // inset-inline-start, margin-inline-start, padding-inline-start
-  'inline-start': (decl, values, dir, preserve) => {
-    const ltrDecl = () => {
-      return cloneDeclBefore(decl, '-left', decl.value);
-    };
-    const rtlDecl = () => {
-      return cloneDeclBefore(decl, '-right', decl.value);
-    };
-    if (dir === 'ltr') {
-      ltrDecl();
-      clean$2(decl, preserve);
-      return;
-    } else if (dir === 'rtl') {
-      rtlDecl();
-      clean$2(decl, preserve);
-      return;
-    } else {
-      cloneRule(decl, 'ltr').append(ltrDecl());
-      cloneRule(decl, 'rtl').append(rtlDecl());
-      clean$2(decl, preserve);
-      return;
-    }
-  },
-  // inset-inline-end, margin-inline-end, padding-inline-end
-  'inline-end': (decl, values, dir, preserve) => {
-    const ltrDecl = () => {
-      return cloneDeclBefore(decl, '-right', decl.value);
-    };
-    const rtlDecl = () => {
-      return cloneDeclBefore(decl, '-left', decl.value);
-    };
-    if (dir === 'ltr') {
-      ltrDecl();
-      clean$2(decl, preserve);
-      return;
-    } else if (dir === 'rtl') {
-      rtlDecl();
-      clean$2(decl, preserve);
-      return;
-    } else {
-      cloneRule(decl, 'ltr').append(ltrDecl());
-      cloneRule(decl, 'rtl').append(rtlDecl());
-      clean$2(decl, preserve);
-      return;
-    }
-  }
-};
 function clean$2(decl, preserve) {
   if (!preserve) decl.remove();
 }
