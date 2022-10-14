@@ -992,9 +992,9 @@ function postcssLogicalProperties(opts) {
       'border-start-end-radius': makeTransform(transformBorderRadius),
       'border-start-start-radius': makeTransform(transformBorderRadius),
       // Four-Directional Shorthand Border Properties
-      'border-color': makeTransform(transformDirectionalShorthands(transformSide['border-inline'], 'border', 'color')),
-      'border-style': makeTransform(transformDirectionalShorthands(transformSide['border-inline'], 'border', 'style')),
-      'border-width': makeTransform(transformDirectionalShorthands(transformSide['border-inline'], 'border', 'width')),
+      'border-color': makeTransform(transformDirectionalShorthands(transformBorder['border-inline'], 'border', 'color')),
+      'border-style': makeTransform(transformDirectionalShorthands(transformBorder['border-inline'], 'border', 'style')),
+      'border-width': makeTransform(transformDirectionalShorthands(transformBorder['border-inline'], 'border', 'width')),
       // Transition helpers
       'transition': makeTransform(transformTransition),
       'transition-property': makeTransform(transformTransition)
