@@ -328,16 +328,16 @@ var transformDirectionalShorthands = ((prefix, postfix) => (decl, values, dir, p
     const blockEnd = values[3] || values[1] || values[0];
     const inlineStart = values[3] || values[1] || values[0];
     const inlineEnd = values[1] || values[0];
-    const blockValues = [blockStart, blockEnd].filter(Boolean).join(' ');
+    const blockValues = [blockStart, blockEnd].filter(Boolean);
     const blockDecl = decl.cloneBefore({
       prop: `${prefix}-block${postfix ? `-${postfix}` : ''}`,
-      value: blockValues
+      value: blockValues.join(' ')
     });
     transformSide.block(blockDecl, blockValues, dir, false);
-    const inlineValues = [inlineStart, inlineEnd].filter(Boolean).join(' ');
+    const inlineValues = [inlineStart, inlineEnd].filter(Boolean);
     const inlineDecl = decl.cloneBefore({
       prop: `${prefix}-inline${postfix ? `-${postfix}` : ''}`,
-      value: inlineValues
+      value: inlineValues.join(' ')
     });
     transformSide.inline(inlineDecl, inlineValues, dir, false);
     clean$5(decl, preserve);
