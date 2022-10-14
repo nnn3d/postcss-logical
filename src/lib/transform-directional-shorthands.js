@@ -1,24 +1,16 @@
 import cloneRule from './clone-rule';
 import cloneRuleSpecificity from './clone-rule-specificity';
 import reduceValues from './reduce-values';
-import transformSide from './transform-side'
 
-export default (prefix, postfix) => (decl, values, dir, preserve) => {
+export default (inlineTransform, prefix, postfix) => (decl, values, dir, preserve) => {
 	if ('logical' !== values[0]) {
-		const blockStart = values[0];
-		const blockEnd = values[3] || values[1] || values[0];
 		const inlineStart = values[3] || values[1] || values[0];
 		const inlineEnd = values[1] || values[0];
 
-		const blockValues = [blockStart, blockEnd].filter(Boolean);
-		const blockDecl = decl.cloneBefore({ prop: `${prefix}-block${postfix ? `-${postfix}` : ''}`, value: blockValues.join(' ') });
-		transformSide.block(blockDecl, blockValues, dir, false);
-
 		const inlineValues = [inlineStart, inlineEnd].filter(Boolean);
 		const inlineDecl = decl.cloneBefore({ prop: `${prefix}-inline${postfix ? `-${postfix}` : ''}`, value: inlineValues.join(' ') });
-		transformSide.inline(inlineDecl, inlineValues, dir, false);
+		inlineTransform(inlineDecl, inlineValues, dir, false);
 
-		clean(decl, preserve);
 		return;
 	}
 
